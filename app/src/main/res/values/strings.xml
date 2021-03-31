@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">DoubleChrono</string>
+    <string name="default_text_button">!Button</string>
 </resources>
