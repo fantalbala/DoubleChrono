@@ -12,17 +12,19 @@ class MainActivity : AppCompatActivity() {
     var redButton: Button? = null
     var blueButton: Button? = null
 
-    private var redTime: Long = 0
-    private var blueTime: Long = 0
-
     private var redIsActif = false
     private var blueIsActif = false
 
     private var isRunning = false
 
+    private var startTime: Long = 0
+    private var currentSeconds: Int = 0
+    private var redSeconds: Int = 0
+    private var blueSeconds: Int = 0
+
     //runs without a timer by reposting this handler at the end of the runnable
     var timerHandler: Handler = Handler();
-    var timerRunnable: Runnable = object : Runnable {
+    private var timerRunnable: Runnable = object : Runnable {
         override fun run() {
             isRunning = true
             updateText()
@@ -37,50 +39,49 @@ class MainActivity : AppCompatActivity() {
         redButton = findViewById<View>(R.id.redButton) as Button
         blueButton = findViewById<View>(R.id.blueButton) as Button
 
-        redButton!!.text = "00:00"
-        blueButton!!.text = "00:00"
+        redButton?.text = "00:00"
+        blueButton?.text = "00:00"
 
-        redButton!!.setOnClickListener {
-            if (!isRunning) {
-                timerHandler.post(timerRunnable)
-            }
+        redButton?.setOnClickListener {
+            startTime = System.currentTimeMillis()
             redIsActif = true
             blueIsActif = false
-        }
+            blueSeconds = currentSeconds
 
-        blueButton!!.setOnClickListener {
             if (!isRunning) {
                 timerHandler.post(timerRunnable)
             }
+        }
+
+        blueButton?.setOnClickListener {
+            startTime = System.currentTimeMillis()
             redIsActif = false
             blueIsActif = true
+            redSeconds = currentSeconds
+
+            if (!isRunning) {
+                timerHandler.post(timerRunnable)
+            }
         }
     }
 
     fun updateText() {
         var prefix = ""
-        if (redIsActif){
-            redTime ++
-            var seconds = (redTime / 100).toInt()
-            var minutes = seconds / 60
-            seconds %= 60
+        val millis = System.currentTimeMillis() - startTime
+        val secondsToAdd = if (redIsActif) redSeconds else blueSeconds
 
-            if (minutes < 10) {
-                prefix = "0"
-            }
+        currentSeconds = (millis / 1000).toInt() + secondsToAdd
+        val minutes = currentSeconds / 60
+        val second = currentSeconds % 60
 
-            redButton!!.text = String.format("%s%d:%02d", prefix, minutes, seconds)
+        if (minutes < 10) {
+            prefix = "0"
+        }
+
+        if (redIsActif) {
+            redButton?.text = String.format("%s%d:%02d", prefix, minutes, second)
         } else if (blueIsActif) {
-            blueTime++
-            var seconds = (blueTime / 100).toInt()
-            var minutes = seconds / 60
-            seconds %= 60
-
-            if (minutes < 10) {
-                prefix = "0"
-            }
-
-            blueButton!!.text = String.format("%s%d:%02d", prefix, minutes, seconds)
+            blueButton?.text = String.format("%s%d:%02d", prefix, minutes, second)
         }
     }
 
