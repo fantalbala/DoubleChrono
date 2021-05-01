@@ -1,11 +1,17 @@
 package com.fantalbala.doublechrono
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.os.Handler
-import android.os.HandlerThread
+import android.annotation.SuppressLint
+import android.content.Context
+import android.os.*
+import android.os.VibrationEffect.createOneShot
+import android.view.KeyEvent
 import android.view.View
 import android.widget.Button
+import android.widget.Toast
+import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
+import kotlin.math.abs
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -21,6 +27,11 @@ class MainActivity : AppCompatActivity() {
     private var currentSeconds: Int = 0
     private var redSeconds: Int = 0
     private var blueSeconds: Int = 0
+
+    private val PRESS_INTERVAL = 1000
+    private val LONG_INTERVAL = 2000
+    private var upKeyTime: Long = 0
+    private var downKeyTime: Long = 0
 
     //runs without a timer by reposting this handler at the end of the runnable
     var timerHandler: Handler = Handler();
@@ -87,6 +98,81 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        isRunning = false
         timerHandler.removeCallbacks(timerRunnable)
     }
+
+   /* @RequiresApi(Build.VERSION_CODES.O)
+    override fun dispatchKeyEvent(event: KeyEvent?): Boolean {
+        val action = event!!.action
+        return when (event.keyCode) {
+            KeyEvent.KEYCODE_VOLUME_UP -> {
+                if (event.eventTime - event.downTime > 2000) {
+                    val vb = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                    vb.vibrate(createOneShot(1000, VibrationEffect.DEFAULT_AMPLITUDE))
+                    onPause()
+                }
+                true
+            }
+            KeyEvent.KEYCODE_VOLUME_DOWN -> {
+                if (action == KeyEvent.ACTION_DOWN) {
+                    //TODO
+                }
+                true
+            }
+            else -> super.dispatchKeyEvent(event)
+        }
+    }
+    */
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        /*if (KeyEvent.KEYCODE_VOLUME_DOWN == event.keyCode) {
+            if (event.eventTime - upKeyTime < PRESS_INTERVAL) {
+                if (event.eventTime - event.downTime > 2000) {
+                    Toast.makeText(this, "Pressed together", Toast.LENGTH_SHORT).show()
+                    val vb = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                    vb.vibrate(createOneShot(1000, VibrationEffect.DEFAULT_AMPLITUDE))
+                    onPause()
+                }
+            }
+            return true
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            if (event.eventTime - downKeyTime < PRESS_INTERVAL) {
+                if (event.eventTime - event.downTime > 2000) {
+                    Toast.makeText(this, "Pressed together", Toast.LENGTH_SHORT).show()
+                    val vb = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                    vb.vibrate(createOneShot(1000, VibrationEffect.DEFAULT_AMPLITUDE))
+                    onPause()
+                }
+            }
+            return true
+        }
+        return super.onKeyDown(keyCode, event) */
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+                downKeyTime = event.eventTime;
+            } else {
+                upKeyTime = event.eventTime;
+            }
+            if (abs(upKeyTime - downKeyTime) <= PRESS_INTERVAL){
+                if (event.eventTime - event.downTime > LONG_INTERVAL) {
+                    val vb = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                    vb.vibrate(createOneShot(1000, VibrationEffect.DEFAULT_AMPLITUDE))
+                    onPause()
+                }
+            }
+            return false
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+   /* override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+        if (KeyEvent.KEYCODE_VOLUME_UP == keyCode) {
+            upKeyTime = event.eventTime
+        } else if (KeyEvent.KEYCODE_VOLUME_DOWN == keyCode) {
+            upKeyTime = event.eventTime
+        }
+        return super.onKeyUp(keyCode, event)
+    } */
 }
