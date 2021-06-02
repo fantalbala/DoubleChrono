@@ -54,24 +54,28 @@ class MainActivity : AppCompatActivity() {
         blueButton?.text = "00:00"
 
         redButton?.setOnClickListener {
-            startTime = System.currentTimeMillis()
-            redIsActif = true
-            blueIsActif = false
-            blueSeconds = currentSeconds
+            if(!redIsActif) {
+                startTime = System.currentTimeMillis()
+                redIsActif = true
+                blueIsActif = false
+                blueSeconds = currentSeconds
 
-            if (!isRunning) {
-                timerHandler.post(timerRunnable)
+                if (!isRunning) {
+                    timerHandler.post(timerRunnable)
+                }
             }
         }
 
         blueButton?.setOnClickListener {
-            startTime = System.currentTimeMillis()
-            redIsActif = false
-            blueIsActif = true
-            redSeconds = currentSeconds
+            if (!blueIsActif) {
+                startTime = System.currentTimeMillis()
+                redIsActif = false
+                blueIsActif = true
+                redSeconds = currentSeconds
 
-            if (!isRunning) {
-                timerHandler.post(timerRunnable)
+                if (!isRunning) {
+                    timerHandler.post(timerRunnable)
+                }
             }
         }
     }
