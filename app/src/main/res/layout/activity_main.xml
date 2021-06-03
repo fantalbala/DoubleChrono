@@ -11,11 +11,11 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:backgroundTint="#F44336"
-        android:rotation="180"
+        android:rotation="0"
         android:text="@string/default_text_button"
-        android:textSize="36sp"
-        app:layout_constraintBottom_toTopOf="@+id/blueButton"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textSize="70sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/blueButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -25,9 +25,9 @@
         android:layout_height="0dp"
         android:backgroundTint="#2196F3"
         android:text="@string/default_text_button"
-        android:textSize="36sp"
+        android:textSize="70sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/redButton" />
+        app:layout_constraintStart_toEndOf="@+id/redButton"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
