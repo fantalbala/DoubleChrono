@@ -47,8 +47,8 @@ class MainActivity : AppCompatActivity() {
         redButton = findViewById<View>(R.id.redButton) as Button
         blueButton = findViewById<View>(R.id.blueButton) as Button
 
-        redButton?.text = "00:00"
-        blueButton?.text = "00:00"
+        redButton?.text = "00:00:00"
+        blueButton?.text = "00:00:00"
 
         redButton?.setOnClickListener {
             if (!redIsActif) {
@@ -116,22 +116,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun updateText() {
-        var prefix = ""
+        var prefixM = ""
+        var prefixH = ""
         val millis = System.currentTimeMillis() - startTime
         val secondsToAdd = if (redIsActif) redSeconds else blueSeconds
 
         currentSeconds = (millis / 1000).toInt() + secondsToAdd
-        val minutes = currentSeconds / 60
+        val hours = currentSeconds / (60 * 60)
+        val minutes = currentSeconds / 60 % 60
         val second = currentSeconds % 60
 
         if (minutes < 10) {
-            prefix = "0"
+            prefixM = "0"
+        }
+
+        if (hours < 10) {
+            prefixH = "0"
         }
 
         if (redIsActif) {
-            redButton?.text = String.format("%s%d:%02d", prefix, minutes, second)
+            redButton?.text = String.format("%s%d:%s%d:%02d", prefixH, hours, prefixM, minutes, second)
         } else if (blueIsActif) {
-            blueButton?.text = String.format("%s%d:%02d", prefix, minutes, second)
+            blueButton?.text = String.format("%s%d:%s%d:%02d", prefixH, hours, prefixM, minutes, second)
         }
     }
 
