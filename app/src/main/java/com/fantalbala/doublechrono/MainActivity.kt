@@ -3,10 +3,13 @@ package com.fantalbala.doublechrono
 import android.content.Context
 import android.os.*
 import android.os.VibrationEffect.createOneShot
-import android.view.*
-import android.widget.Button
+import android.view.KeyEvent
+import android.view.Window
+import android.view.WindowInsets
+import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import com.fantalbala.doublechrono.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
@@ -16,8 +19,7 @@ class MainActivity : AppCompatActivity() {
         private const val TIME_STRING_FORMAT = "%s%d:%s%d:%02d"
     }
 
-    var redButton: Button? = null
-    var blueButton: Button? = null
+    private lateinit var binding: ActivityMainBinding
 
     private var redIsActive = false
     private var blueIsActive = false
@@ -42,7 +44,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setAsFullScreen()
 
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
         initRedButton()
         initBlueButton()
@@ -69,9 +73,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initRedButton() {
-        redButton = findViewById<View>(R.id.redButton) as Button
-
-        redButton?.apply {
+        with(binding.redButton) {
             text = TIME_INITIAL_TEXT
             setOnClickListener {
                 if (!redIsActive) {
@@ -89,9 +91,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initBlueButton() {
-        blueButton = findViewById<View>(R.id.blueButton) as Button
-
-        blueButton?.apply {
+        with(binding.blueButton) {
             text = TIME_INITIAL_TEXT
             setOnClickListener {
                 if (!blueIsActive) {
@@ -121,10 +121,10 @@ class MainActivity : AppCompatActivity() {
         val prefixH = if (hours < 10) "0" else ""
 
         if (redIsActive) {
-            redButton?.text =
+            binding.redButton.text =
                 String.format(TIME_STRING_FORMAT, prefixH, hours, prefixM, minutes, second)
         } else if (blueIsActive) {
-            blueButton?.text =
+            binding.blueButton.text =
                 String.format(TIME_STRING_FORMAT, prefixH, hours, prefixM, minutes, second)
         }
     }
