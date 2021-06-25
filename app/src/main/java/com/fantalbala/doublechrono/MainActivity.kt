@@ -48,8 +48,8 @@ class MainActivity : AppCompatActivity() {
         initBlueButton()
     }
 
-    override fun onPause() {
-        super.onPause()
+    override fun onDestroy() {
+        super.onDestroy()
         isRunning = false
         timerHandler.removeCallbacks(timerRunnable)
     }
