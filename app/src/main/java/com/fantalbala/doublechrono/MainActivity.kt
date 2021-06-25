@@ -1,8 +1,6 @@
 package com.fantalbala.doublechrono
 
-import android.app.Activity
 import android.content.Context
-import android.content.pm.ActivityInfo
 import android.os.*
 import android.os.VibrationEffect.createOneShot
 import android.view.*
@@ -10,14 +8,19 @@ import android.widget.Button
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 
-
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        private const val LONG_INTERVAL = 2000
+        private const val TIME_INITIAL_TEXT = "00:00:00"
+        private const val TIME_STRING_FORMAT = "%s%d:%s%d:%02d"
+    }
 
     var redButton: Button? = null
     var blueButton: Button? = null
 
-    private var redIsActif = false
-    private var blueIsActif = false
+    private var redIsActive = false
+    private var blueIsActive = false
 
     private var isRunning = false
 
@@ -26,11 +29,8 @@ class MainActivity : AppCompatActivity() {
     private var redSeconds: Int = 0
     private var blueSeconds: Int = 0
 
-    private val LONG_INTERVAL = 2000
-
-    //runs without a timer by reposting this handler at the end of the runnable
-    var timerHandler: Handler = Handler();
-    private var timerRunnable: Runnable = object : Runnable {
+    val timerHandler = Handler(Looper.getMainLooper())
+    private val timerRunnable: Runnable = object : Runnable {
         override fun run() {
             isRunning = true
             updateText()
@@ -44,37 +44,14 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-        redButton = findViewById<View>(R.id.redButton) as Button
-        blueButton = findViewById<View>(R.id.blueButton) as Button
+        initRedButton()
+        initBlueButton()
+    }
 
-        redButton?.text = "00:00:00"
-        blueButton?.text = "00:00:00"
-
-        redButton?.setOnClickListener {
-            if (!redIsActif) {
-                startTime = System.currentTimeMillis()
-                redIsActif = true
-                blueIsActif = false
-                blueSeconds = currentSeconds
-
-                if (!isRunning) {
-                    timerHandler.post(timerRunnable)
-                }
-            }
-        }
-
-        blueButton?.setOnClickListener {
-            if (!blueIsActif) {
-                startTime = System.currentTimeMillis()
-                redIsActif = false
-                blueIsActif = true
-                redSeconds = currentSeconds
-
-                if (!isRunning) {
-                    timerHandler.post(timerRunnable)
-                }
-            }
-        }
+    override fun onPause() {
+        super.onPause()
+        isRunning = false
+        timerHandler.removeCallbacks(timerRunnable)
     }
 
     private fun setAsFullScreen() {
@@ -91,37 +68,67 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun updateText() {
-        var prefixM = ""
-        var prefixH = ""
+    private fun initRedButton() {
+        redButton = findViewById<View>(R.id.redButton) as Button
+
+        redButton?.apply {
+            text = TIME_INITIAL_TEXT
+            setOnClickListener {
+                if (!redIsActive) {
+                    startTime = System.currentTimeMillis()
+                    redIsActive = true
+                    blueIsActive = false
+                    blueSeconds = currentSeconds
+
+                    if (!isRunning) {
+                        timerHandler.post(timerRunnable)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun initBlueButton() {
+        blueButton = findViewById<View>(R.id.blueButton) as Button
+
+        blueButton?.apply {
+            text = TIME_INITIAL_TEXT
+            setOnClickListener {
+                if (!blueIsActive) {
+                    startTime = System.currentTimeMillis()
+                    redIsActive = false
+                    blueIsActive = true
+                    redSeconds = currentSeconds
+
+                    if (!isRunning) {
+                        timerHandler.post(timerRunnable)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateText() {
         val millis = System.currentTimeMillis() - startTime
-        val secondsToAdd = if (redIsActif) redSeconds else blueSeconds
+        val secondsToAdd = if (redIsActive) redSeconds else blueSeconds
 
         currentSeconds = (millis / 1000).toInt() + secondsToAdd
         val hours = currentSeconds / (60 * 60)
         val minutes = currentSeconds / 60 % 60
         val second = currentSeconds % 60
 
-        if (minutes < 10) {
-            prefixM = "0"
-        }
+        val prefixM = if (minutes < 10) "0" else ""
+        val prefixH = if (hours < 10) "0" else ""
 
-        if (hours < 10) {
-            prefixH = "0"
-        }
-
-        if (redIsActif) {
-            redButton?.text = String.format("%s%d:%s%d:%02d", prefixH, hours, prefixM, minutes, second)
-        } else if (blueIsActif) {
-            blueButton?.text = String.format("%s%d:%s%d:%02d", prefixH, hours, prefixM, minutes, second)
+        if (redIsActive) {
+            redButton?.text =
+                String.format(TIME_STRING_FORMAT, prefixH, hours, prefixM, minutes, second)
+        } else if (blueIsActive) {
+            blueButton?.text =
+                String.format(TIME_STRING_FORMAT, prefixH, hours, prefixM, minutes, second)
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        isRunning = false
-        timerHandler.removeCallbacks(timerRunnable)
-    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
