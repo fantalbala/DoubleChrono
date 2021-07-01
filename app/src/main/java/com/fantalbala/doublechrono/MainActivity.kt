@@ -1,23 +1,28 @@
 package com.fantalbala.doublechrono
 
-import android.app.Activity
 import android.content.Context
-import android.content.pm.ActivityInfo
 import android.os.*
 import android.os.VibrationEffect.createOneShot
-import android.view.*
-import android.widget.Button
+import android.view.KeyEvent
+import android.view.Window
+import android.view.WindowInsets
+import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-
+import com.fantalbala.doublechrono.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
-    var redButton: Button? = null
-    var blueButton: Button? = null
+    companion object {
+        private const val LONG_INTERVAL = 2000
+        private const val TIME_INITIAL_TEXT = "00:00:00"
+        private const val TIME_STRING_FORMAT = "%s%d:%s%d:%02d"
+    }
 
-    private var redIsActif = false
-    private var blueIsActif = false
+    private lateinit var binding: ActivityMainBinding
+
+    private var redIsActive = false
+    private var blueIsActive = false
 
     private var isRunning = false
 
@@ -26,11 +31,8 @@ class MainActivity : AppCompatActivity() {
     private var redSeconds: Int = 0
     private var blueSeconds: Int = 0
 
-    private val LONG_INTERVAL = 2000
-
-    //runs without a timer by reposting this handler at the end of the runnable
-    var timerHandler: Handler = Handler();
-    private var timerRunnable: Runnable = object : Runnable {
+    val timerHandler = Handler(Looper.getMainLooper())
+    private val timerRunnable: Runnable = object : Runnable {
         override fun run() {
             isRunning = true
             updateText()
@@ -40,111 +42,95 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setAsFullScreen()
 
-        setContentView(R.layout.activity_main)
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
-        redButton = findViewById<View>(R.id.redButton) as Button
-        blueButton = findViewById<View>(R.id.blueButton) as Button
-
-        redButton?.text = "00:00:00"
-        blueButton?.text = "00:00:00"
-
-        redButton?.setOnClickListener {
-            if (!redIsActif) {
-                startTime = System.currentTimeMillis()
-                redIsActif = true
-                blueIsActif = false
-                blueSeconds = currentSeconds
-
-                if (!isRunning) {
-                    timerHandler.post(timerRunnable)
-                }
-            }
-        }
-
-        blueButton?.setOnClickListener {
-            if (!blueIsActif) {
-                startTime = System.currentTimeMillis()
-                redIsActif = false
-                blueIsActif = true
-                redSeconds = currentSeconds
-
-                if (!isRunning) {
-                    timerHandler.post(timerRunnable)
-                }
-            }
-        }
+        initRedButton()
+        initBlueButton()
     }
 
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) hideSystemUI()
+    override fun onDestroy() {
+        super.onDestroy()
+        stopRunning()
     }
 
-    private fun Activity.hideSystemUI() {
+    private fun stopRunning() {
+        isRunning = false
+        timerHandler.removeCallbacks(timerRunnable)
+    }
+
+    private fun setAsFullScreen() {
+        requestWindowFeature(Window.FEATURE_NO_TITLE)
+
+        @Suppress("DEPRECATION")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.insetsController?.let {
-                // Default behavior is that if navigation bar is hidden, the system will "steal" touches
-                // and show it again upon user's touch. We just want the user to be able to show the
-                // navigation bar by swipe, touches are handled by custom code -> change system bar behavior.
-                // Alternative to deprecated SYSTEM_UI_FLAG_IMMERSIVE.
-                it.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE
-                // Finally, hide the system bars, alternative to View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                // and SYSTEM_UI_FLAG_FULLSCREEN.
-                it.hide(WindowInsets.Type.systemBars())
-            }
+            window.insetsController?.hide(WindowInsets.Type.statusBars())
         } else {
-            // Enables regular immersive mode.
-            // For "lean back" mode, remove SYSTEM_UI_FLAG_IMMERSIVE.
-            // Or for "sticky immersive," replace it with SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = (
-                    // Do not let system steal touches for showing the navigation bar
-                    View.SYSTEM_UI_FLAG_IMMERSIVE
-                            // Hide the nav bar and status bar
-                            or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                            or View.SYSTEM_UI_FLAG_FULLSCREEN
-                            // Keep the app content behind the bars even if user swipes them up
-                            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
-            // make navbar translucent - do this already in hideSystemUI() so that the bar
-            // is translucent if user swipes it up
-            @Suppress("DEPRECATION")
-            window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN
+            )
         }
     }
 
-    fun updateText() {
-        var prefixM = ""
-        var prefixH = ""
+    private fun initRedButton() {
+        with(binding.redButton) {
+            text = TIME_INITIAL_TEXT
+            setOnClickListener {
+                if (!redIsActive) {
+                    startTime = System.currentTimeMillis()
+                    redIsActive = true
+                    blueIsActive = false
+                    blueSeconds = currentSeconds
+
+                    if (!isRunning) {
+                        timerHandler.post(timerRunnable)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun initBlueButton() {
+        with(binding.blueButton) {
+            text = TIME_INITIAL_TEXT
+            setOnClickListener {
+                if (!blueIsActive) {
+                    startTime = System.currentTimeMillis()
+                    redIsActive = false
+                    blueIsActive = true
+                    redSeconds = currentSeconds
+
+                    if (!isRunning) {
+                        timerHandler.post(timerRunnable)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateText() {
         val millis = System.currentTimeMillis() - startTime
-        val secondsToAdd = if (redIsActif) redSeconds else blueSeconds
+        val secondsToAdd = if (redIsActive) redSeconds else blueSeconds
 
         currentSeconds = (millis / 1000).toInt() + secondsToAdd
         val hours = currentSeconds / (60 * 60)
         val minutes = currentSeconds / 60 % 60
         val second = currentSeconds % 60
 
-        if (minutes < 10) {
-            prefixM = "0"
-        }
+        val prefixM = if (minutes < 10) "0" else ""
+        val prefixH = if (hours < 10) "0" else ""
 
-        if (hours < 10) {
-            prefixH = "0"
+        if (redIsActive) {
+            binding.redButton.text =
+                String.format(TIME_STRING_FORMAT, prefixH, hours, prefixM, minutes, second)
+        } else if (blueIsActive) {
+            binding.blueButton.text =
+                String.format(TIME_STRING_FORMAT, prefixH, hours, prefixM, minutes, second)
         }
-
-        if (redIsActif) {
-            redButton?.text = String.format("%s%d:%s%d:%02d", prefixH, hours, prefixM, minutes, second)
-        } else if (blueIsActif) {
-            blueButton?.text = String.format("%s%d:%s%d:%02d", prefixH, hours, prefixM, minutes, second)
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        isRunning = false
-        timerHandler.removeCallbacks(timerRunnable)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -153,7 +139,7 @@ class MainActivity : AppCompatActivity() {
             if (event.eventTime - event.downTime > LONG_INTERVAL) {
                 val vb = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                 vb.vibrate(createOneShot(1000, VibrationEffect.DEFAULT_AMPLITUDE))
-                onPause()
+                stopRunning()
             }
             return true
         }
