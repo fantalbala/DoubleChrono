@@ -54,6 +54,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        stopRunning()
+    }
+
+    private fun stopRunning() {
         isRunning = false
         timerHandler.removeCallbacks(timerRunnable)
     }
@@ -129,14 +133,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
         if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
             if (event.eventTime - event.downTime > LONG_INTERVAL) {
                 val vb = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
                 vb.vibrate(createOneShot(1000, VibrationEffect.DEFAULT_AMPLITUDE))
-                onPause()
+                stopRunning()
             }
             return true
         }
